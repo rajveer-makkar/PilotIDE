@@ -24,14 +24,14 @@ export function EditorTabs() {
 
   if (entries.length === 0) {
     return (
-      <div className="flex h-[35px] items-center border-b bg-muted/30 px-2">
+      <div className="flex h-[35px] items-center border-b bg-muted/30 px-2 backdrop-blur-sm">
         <span className="text-xs text-muted-foreground">No files open</span>
       </div>
     )
   }
 
   return (
-    <div className="flex h-[35px] items-center overflow-x-auto border-b bg-muted/30">
+    <div className="flex h-[35px] items-center overflow-x-auto border-b bg-muted/30 backdrop-blur-sm">
       {entries.map((file) => (
         <ContextMenu key={file.path}>
           <ContextMenuTrigger asChild>
@@ -40,7 +40,7 @@ export function EditorTabs() {
               className={cn(
                 "flex shrink-0 items-center gap-1 border-r px-3 text-[13px]",
                 "cursor-pointer hover:bg-background/50",
-                activePath === file.path ? "bg-background text-foreground" : "text-muted-foreground"
+                activePath === file.path ? "bg-background/80 text-foreground" : "text-muted-foreground"
               )}
               onClick={() => setActive(file.path)}
             >

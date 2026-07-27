@@ -2,15 +2,11 @@
 
 import { useState, useCallback } from "react"
 import { Button } from "@workspace/ui/components/button"
-import { PlusIcon, XIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
+import { TabBar, type Tab } from "@/components/ui/tab-bar"
 import { TerminalInstance } from "./terminal-instance"
 import { useTerminalSettings } from "@/stores/terminal-settings.store"
-
-interface Tab {
-  id: string
-  name: string
-}
 
 let tabCounter = 0
 
@@ -44,8 +40,8 @@ export function TerminalPanel() {
       const { id } = await res.json()
       if (!id) { setError("No session ID returned"); return }
       tabCounter++
-      const name = `Terminal ${tabCounter}`
-      setTabs((prev) => [...prev, { id, name }])
+      const label = `Terminal ${tabCounter}`
+      setTabs((prev) => [...prev, { id, label }])
       setActiveId(id)
     } catch (e) {
       setError(`Error: ${(e as Error).message}`)
@@ -69,27 +65,8 @@ export function TerminalPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center border-b bg-muted/20 px-1">
-        <div className="flex flex-1 items-center gap-0 overflow-x-auto">
-          {tabs.map((tab) => (
-            <div
-              key={tab.id}
-              className={cn(
-                "flex items-center gap-1 border-r px-3 py-1 text-xs cursor-pointer whitespace-nowrap hover:bg-accent/50",
-                tab.id === activeId && "bg-background"
-              )}
-              onClick={() => setActiveId(tab.id)}
-            >
-              <span>{tab.name}</span>
-              <button
-                className="ml-1 rounded-sm p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-                onClick={(e) => { e.stopPropagation(); closeTab(tab.id) }}
-              >
-                <XIcon className="size-3" />
-              </button>
-            </div>
-          ))}
-        </div>
+      <div className="flex shrink-0 items-center border-b bg-muted/20 px-1 backdrop-blur-sm">
+        <TabBar tabs={tabs} activeId={activeId} onChange={setActiveId} onClose={closeTab} size="sm" className="flex-1" />
         <Button variant="ghost" size="icon-xs" className="ml-1 shrink-0 text-muted-foreground" onClick={create} disabled={creating}>
           <PlusIcon className="size-3.5" />
         </Button>

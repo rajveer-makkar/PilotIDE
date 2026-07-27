@@ -40,7 +40,7 @@ function BreadcrumbBar({ path, showPreview, onTogglePreview }: { path: string; s
   const segments = path.split("/")
   const isMd = path.endsWith(".md") || path.endsWith(".mdx")
   return (
-    <div className="flex h-[22px] shrink-0 items-center gap-1 border-b bg-muted/20 px-3 text-[11px] text-muted-foreground">
+    <div className="flex h-[22px] shrink-0 items-center gap-1 border-b bg-muted/20 px-3 text-[11px] text-muted-foreground backdrop-blur-sm">
       {segments.map((s, i) => (
         <span key={i} className="flex items-center gap-1">
           {i > 0 && <span className="opacity-40">/</span>}
@@ -127,7 +127,7 @@ export function CodeEditor({ workspaceRoot }: CodeEditorProps) {
   if (diffFile) {
     return (
       <div className="flex flex-1 flex-col">
-        <div className="flex h-[35px] items-center gap-2 border-b bg-muted/30 px-2 text-xs">
+        <div className="flex h-[35px] items-center gap-2 border-b bg-muted/30 px-2 text-xs backdrop-blur-sm">
           <Button variant="ghost" size="icon-xs" onClick={closeDiff}>
             <ArrowLeftIcon className="size-4" />
           </Button>

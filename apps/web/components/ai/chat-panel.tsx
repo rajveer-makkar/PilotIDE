@@ -18,9 +18,9 @@ function ChatBubble({ msg }: { msg: ChatMessage }) {
         )}
       </div>
       <div
-        className={`max-w-[85%] rounded-lg px-3 py-1.5 text-[13px] leading-relaxed ${
+        className={`max-w-[85%] rounded-lg px-3 py-1.5 text-sm leading-relaxed ${
           msg.role === "assistant"
-            ? "bg-muted text-foreground"
+            ? "bg-muted/80 text-foreground backdrop-blur-sm"
             : "bg-primary text-primary-foreground"
         }`}
       >
@@ -124,7 +124,7 @@ export function ChatPanel() {
         </div>
       )}
 
-      <div className="flex items-end gap-2 border-t p-2">
+      <div className="flex items-end gap-2 border-t bg-muted/20 p-2 backdrop-blur-sm">
         <Textarea
           placeholder="Ask about your code..."
           value={input}

@@ -83,7 +83,7 @@ export function SearchPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b p-2">
+      <div className="border-b bg-muted/20 p-2 backdrop-blur-sm">
         <div className="flex items-center gap-1">
           <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
           <Input

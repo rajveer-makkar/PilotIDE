@@ -23,10 +23,10 @@ const statusIcon: Record<string, string> = {
   untracked: "?",
 }
 const statusColor: Record<string, string> = {
-  added: "text-green-500",
-  modified: "text-yellow-500",
-  deleted: "text-red-500",
-  renamed: "text-purple-500",
+  added: "text-green-400",
+  modified: "text-yellow-400",
+  deleted: "text-red-400",
+  renamed: "text-purple-400",
   untracked: "text-muted-foreground",
 }
 
@@ -180,7 +180,7 @@ export function GitPanel() {
             </div>
           )}
 
-          <div className="mt-auto border-t p-2">
+          <div className="mt-auto border-t bg-muted/20 p-2 backdrop-blur-sm">
             <div className="flex gap-1">
               <Input
                 placeholder="Commit message"

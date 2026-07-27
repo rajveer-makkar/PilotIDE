@@ -32,8 +32,8 @@ interface FileEntry {
 
 function FileIconByExt({ name }: { name: string }) {
   const ext = name.split(".").pop()?.toLowerCase()
-  const color = ext === "ts" || ext === "tsx" ? "text-blue-500"
-    : ext === "js" || ext === "jsx" ? "text-yellow-500"
+  const color = ext === "ts" || ext === "tsx" ? "text-blue-400"
+    : ext === "js" || ext === "jsx" ? "text-yellow-400"
     : ext === "css" || ext === "scss" ? "text-pink-400"
     : ext === "json" ? "text-orange-400"
     : ext === "md" ? "text-purple-400"
@@ -93,7 +93,7 @@ function CreateInput({
       {type === "directory" ? <FolderIcon className="size-4 shrink-0 text-blue-400" /> : <FileIcon className="size-4 shrink-0 text-muted-foreground" />}
       <input
         ref={inputRef}
-        className="h-5 flex-1 rounded border bg-background px-1 text-[13px] outline-none"
+        className="h-6 flex-1 rounded border bg-background/80 px-1 text-sm outline-none backdrop-blur-sm"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter") submit(); if (e.key === "Escape") onDone() }}
@@ -231,7 +231,7 @@ function TreeNode({
         <ContextMenuTrigger asChild>
           <button
             className={cn(
-              "flex w-full items-center gap-1 rounded-sm px-2 py-[3px] text-[13px] hover:bg-accent hover:text-accent-foreground",
+              "flex w-full items-center gap-1 rounded-sm px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground",
               "text-muted-foreground"
             )}
             style={{ paddingLeft: `${8 + depth * 16}px` }}
@@ -245,10 +245,10 @@ function TreeNode({
             ) : (
               <><span className="w-3.5" /><FileIconByExt name={name} /></>
             )}
-            {renaming ? (
+              {renaming ? (
               <input
                 ref={renameRef}
-                className="h-5 flex-1 rounded border bg-background px-1 text-[13px] outline-none"
+                className="h-6 flex-1 rounded border bg-background px-1 text-sm outline-none backdrop-blur-sm"
                 value={renameValue}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setRenameValue(e.target.value)}
@@ -340,7 +340,13 @@ export function FileTree({ rootPath }: { rootPath: string }) {
   function refresh() { setRefreshKey((k) => k + 1) }
 
   if (loading) {
-    return <div className="p-3 text-xs text-muted-foreground">Loading...</div>
+    return (
+      <div className="space-y-1 p-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-5 animate-pulse rounded bg-muted/50" style={{ width: `${60 + Math.random() * 40}%` }} />
+        ))}
+      </div>
+    )
   }
 
   return (

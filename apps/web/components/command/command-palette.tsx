@@ -56,10 +56,10 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-[15vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-[15vh] backdrop-blur-sm"
       onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false) }}
     >
-      <div className="w-full max-w-[540px] rounded-lg border bg-popover text-popover-foreground shadow-lg">
+      <div className="w-full max-w-[540px] rounded-lg border bg-popover/95 text-popover-foreground shadow-lg backdrop-blur-md">
         <input
           ref={inputRef}
           value={query}

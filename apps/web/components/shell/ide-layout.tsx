@@ -38,6 +38,7 @@ import { OutputPanel } from "@/components/output/output-panel"
 import { ChatPanel } from "@/components/ai/chat-panel"
 import { SettingsPanel } from "@/components/settings/settings-panel"
 import { CommandPalette } from "@/components/command/command-palette"
+import { TabBar, type Tab } from "@/components/ui/tab-bar"
 import { useCommandStore, type Command } from "@/stores/command.store"
 import { useEditorSettings } from "@/stores/editor-settings.store"
 
@@ -69,7 +70,7 @@ function ActivityBar({
 }) {
   return (
     <TooltipProvider>
-      <nav className="flex w-[48px] shrink-0 flex-col items-center gap-1 border-r bg-muted py-2">
+      <nav className="flex w-[48px] shrink-0 flex-col items-center gap-1 border-r bg-muted/60 py-2 backdrop-blur-sm">
         {activityItems.map((item) => {
           const Icon = item.icon
           const isActive = activeTab === item.tab
@@ -154,15 +155,34 @@ function ActivityBar({
 function StatusBar() {
   const [branch, setBranch] = useState("")
   const workspaceRoot = useLayoutStore((s) => s.workspaceRoot)
+  const workspaceName = useLayoutStore((s) => s.workspaceName)
+  const dirHandle = useLayoutStore((s) => s.dirHandle)
   useEffect(() => {
+    if (dirHandle) {
+      ;(async () => {
+        try {
+          const gitDir = await dirHandle.getDirectoryHandle(".git", {
+            create: false,
+          })
+          const headFile = await gitDir.getFileHandle("HEAD", { create: false })
+          const file = await headFile.getFile()
+          const text = await file.text()
+          setBranch(text.match(/^ref: refs\/heads\/(.+)$/m)?.[1] ?? "")
+        } catch {
+          setBranch("")
+        }
+      })()
+      return
+    }
     if (!workspaceRoot) return
     fetch("/api/git/status")
       .then((r) => r.json())
       .then((d) => setBranch(d.branch ?? ""))
       .catch(() => {})
-  }, [workspaceRoot])
+  }, [workspaceRoot, dirHandle])
   return (
-    <footer className="flex h-[22px] shrink-0 items-center border-t bg-muted px-3 text-[11px] text-muted-foreground">
+    <footer className="flex h-[22px] shrink-0 items-center border-t bg-muted/70 px-3 text-[11px] text-muted-foreground backdrop-blur-sm">
+      {workspaceName && <span className="mr-2">{workspaceName}</span>}
       {branch && (
         <span className="flex items-center gap-1">
           <GitBranchIcon className="size-3" /> {branch}
@@ -183,7 +203,7 @@ function SidebarPanel({ activeTab }: { activeTab: ActivityTab }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-[35px] items-center gap-2 px-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
+      <div className="flex h-[36px] shrink-0 items-center gap-2 border-b bg-muted/30 px-3 text-xs font-medium tracking-wider text-muted-foreground uppercase backdrop-blur-sm">
         {sidebarTitle[activeTab]}
         {workspaceName && activeTab === "explorer" && (
           <span className="truncate text-[11px] font-normal normal-case opacity-60">
@@ -191,7 +211,6 @@ function SidebarPanel({ activeTab }: { activeTab: ActivityTab }) {
           </span>
         )}
       </div>
-      <Separator />
       <div className="flex flex-1 flex-col overflow-auto">
         {activeTab === "explorer" &&
           (workspaceRoot || dirHandle ? (
@@ -316,7 +335,7 @@ export function IDELayout() {
   return (
     <>
       <CommandPalette />
-      <div className="flex h-dvh flex-col bg-background text-foreground">
+      <div className="flex h-dvh flex-col bg-background/80 text-foreground backdrop-blur-sm">
         <div className="flex flex-1 overflow-hidden">
           <ActivityBar activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -334,7 +353,7 @@ export function IDELayout() {
               <ResizablePanelGroup orientation="vertical">
                 <ResizablePanel defaultSize={75} minSize={20}>
                   <div className="flex h-full flex-col">
-                    <div className="flex shrink-0 items-center border-b bg-muted/30">
+                    <div className="flex shrink-0 items-center border-b bg-muted/30 backdrop-blur-sm">
                       <Button
                         variant="ghost"
                         size="icon-xs"
@@ -353,48 +372,20 @@ export function IDELayout() {
                 {bottomOpen && (
                   <>
                     <ResizableHandle />
-                    <ResizablePanel defaultSize={25} minSize={10}>
+                    <ResizablePanel defaultSize={45} minSize={10}>
                       <div className="flex h-full flex-col">
-                        <div className="flex h-[35px] items-center border-b bg-muted/30 px-2">
-                          <div className="flex items-center gap-1 text-xs">
-                            <button
-                              className={cn(
-                                "rounded px-2 py-1",
-                                bottomTab === "terminal" && "bg-background"
-                              )}
-                              onClick={() =>
-                                useLayoutStore
-                                  .getState()
-                                  .setBottomTab("terminal")
-                              }
-                            >
-                              TERMINAL
-                            </button>
-                            <button
-                              className={cn(
-                                "rounded px-2 py-1",
-                                bottomTab === "problems" && "bg-background"
-                              )}
-                              onClick={() =>
-                                useLayoutStore
-                                  .getState()
-                                  .setBottomTab("problems")
-                              }
-                            >
-                              PROBLEMS
-                            </button>
-                            <button
-                              className={cn(
-                                "rounded px-2 py-1",
-                                bottomTab === "output" && "bg-background"
-                              )}
-                              onClick={() =>
-                                useLayoutStore.getState().setBottomTab("output")
-                              }
-                            >
-                              OUTPUT
-                            </button>
-                          </div>
+                        <div className="flex h-[35px] items-center border-b bg-muted/30 px-0 backdrop-blur-sm">
+                          <TabBar
+                            tabs={[
+                              { id: "terminal", label: "TERMINAL" },
+                              { id: "problems", label: "PROBLEMS" },
+                              { id: "output", label: "OUTPUT" },
+                            ]}
+                            activeId={bottomTab}
+                            onChange={(id) => useLayoutStore.getState().setBottomTab(id as any)}
+                            size="sm"
+                            className="flex-1"
+                          />
                           <Button
                             variant="ghost"
                             size="icon-xs"
@@ -422,10 +413,9 @@ export function IDELayout() {
                 <ResizableHandle />
                 <ResizablePanel defaultSize={400} minSize={12}>
                   <div className="flex h-full flex-col">
-                    <div className="flex h-[35px] items-center gap-2 px-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                    <div className="flex h-[36px] shrink-0 items-center gap-2 border-b bg-muted/30 px-3 text-xs font-medium tracking-wider text-muted-foreground uppercase backdrop-blur-sm">
                       AI Chat
                     </div>
-                    <Separator />
                     <ChatPanel />
                   </div>
                 </ResizablePanel>

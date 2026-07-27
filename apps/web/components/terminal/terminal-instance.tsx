@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import "xterm/css/xterm.css"
 import { useTerminalSettings } from "@/stores/terminal-settings.store"
 
 interface Props {
@@ -14,6 +13,7 @@ export function TerminalInstance({ sessionId, onExit }: Props) {
   const killTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const onExitRef = useRef(onExit)
   onExitRef.current = onExit
+  const errRef = useRef<HTMLDivElement | null>(null)
 
   const { fontSize, fontFamily } = useTerminalSettings()
 
@@ -23,6 +23,7 @@ export function TerminalInstance({ sessionId, onExit }: Props) {
     let term: any = null
     let fit: { fit: () => void } | null = null
     let ro: ResizeObserver | null = null
+    const errEl = errRef.current
 
     async function init() {
       try {
@@ -31,6 +32,8 @@ export function TerminalInstance({ sessionId, onExit }: Props) {
           import("xterm-addon-fit"),
         ])
         if (cancelled || !ref.current) return
+
+        errEl?.remove()
 
         const isDark = document.documentElement.classList.contains("dark")
         term = new Terminal({
@@ -53,6 +56,10 @@ export function TerminalInstance({ sessionId, onExit }: Props) {
         }).catch(() => {})
       } catch (err) {
         console.error("[terminal]", err)
+        if (errEl) {
+          errEl.textContent = `xterm error: ${(err as Error).message}`
+          errEl.style.display = "flex"
+        }
         return
       }
 
@@ -131,5 +138,25 @@ export function TerminalInstance({ sessionId, onExit }: Props) {
     }
   }, [sessionId])
 
-  return <div ref={ref} className="h-full w-full" />
+  return (
+    <>
+      <style>{`
+.xterm{ cursor:text; position:relative; user-select:none; -ms-user-select:none; -webkit-user-select:none }
+.xterm.focus,.xterm:focus{ outline:none }
+.xterm .xterm-viewport{ background-color:#000; overflow-y:scroll; cursor:default; position:absolute; right:0; left:0; top:0; bottom:0 }
+.xterm .xterm-screen{ position:relative }
+.xterm .xterm-screen canvas{ position:absolute; left:0; top:0 }
+.xterm .xterm-helper-textarea{ position:absolute; opacity:0; left:-9999em; top:0; width:0; height:0; z-index:-5; white-space:nowrap; overflow:hidden; resize:none; border:0; padding:0; margin:0 }
+.xterm .composition-view{ display:none; position:absolute; white-space:nowrap; z-index:1 }
+.xterm .composition-view.active{ display:block }
+.xterm .xterm-accessibility,.xterm .xterm-message{ position:absolute; left:0; top:0; bottom:0; right:0; z-index:10; color:transparent; pointer-events:none }
+.xterm-char-measure-element{ display:inline-block; visibility:hidden; position:absolute; top:0; left:-9999em; line-height:normal }
+`}</style>
+      <div
+        ref={errRef}
+        className="hidden h-full w-full items-center justify-center text-xs text-destructive"
+      />
+      <div ref={ref} className="h-full w-full" />
+    </>
+  )
 }

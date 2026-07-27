@@ -16,7 +16,7 @@ export function OutputPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b bg-muted/20 px-2 py-1">
+      <div className="flex items-center justify-between border-b bg-muted/20 px-2 py-1 backdrop-blur-sm">
         <span className="text-[11px] text-muted-foreground">Output</span>
         {lines.length > 0 && (
           <Button variant="ghost" size="icon-xs" className="text-muted-foreground" onClick={clear}>

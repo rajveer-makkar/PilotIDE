@@ -12,9 +12,9 @@ const severityIcon = {
 }
 
 const severityColor = {
-  error: "text-red-500",
-  warning: "text-yellow-500",
-  info: "text-blue-500",
+  error: "text-red-400",
+  warning: "text-yellow-400",
+  info: "text-blue-400",
 }
 
 function ProblemRow({ problem }: { problem: Problem }) {
