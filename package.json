@@ -24,5 +24,10 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@dietrichgebert/ponytail": "^4.8.4",
+    "cmatrix": "^0.5.3",
+    "node-pty": "^1.1.0"
+  }
 }

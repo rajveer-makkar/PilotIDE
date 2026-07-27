@@ -18,7 +18,8 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["SHELL", "AI_API_URL", "AI_API_KEY", "AI_MODEL"]
     }
   }
 }
