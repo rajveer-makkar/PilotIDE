@@ -5,14 +5,26 @@ interface Message {
   content: string
 }
 
-const API_URL = process.env.AI_API_URL ?? "https://api.openai.com/v1"
-const API_KEY = process.env.AI_API_KEY ?? ""
-const MODEL = process.env.AI_MODEL ?? "gpt-4o-mini"
+const ENV_API_URL = process.env.AI_API_URL ?? "https://api.openai.com/v1"
+const ENV_API_KEY = process.env.AI_API_KEY ?? ""
+const ENV_MODEL = process.env.AI_MODEL ?? "gpt-4o-mini"
 
 export async function POST(request: Request) {
-  const { messages, model }: { messages: Message[]; model?: string } = await request.json()
+  const {
+    messages,
+    model: bodyModel,
+    aiConfig,
+  }: {
+    messages: Message[]
+    model?: string
+    aiConfig?: { apiUrl?: string; apiKey?: string; model?: string }
+  } = await request.json()
 
-  if (!API_KEY) {
+  const apiUrl = aiConfig?.apiUrl || ENV_API_URL
+  const apiKey = aiConfig?.apiKey || ENV_API_KEY
+  const model = bodyModel || aiConfig?.model || ENV_MODEL
+
+  if (!apiKey) {
     return NextResponse.json({ error: "AI_API_KEY not configured" }, { status: 400 })
   }
 
@@ -23,16 +35,16 @@ export async function POST(request: Request) {
   }
 
   const body = JSON.stringify({
-    model: model ?? MODEL,
+    model,
     messages: [systemMsg, ...messages],
     stream: true,
   })
 
-  const res = await fetch(`${API_URL}/chat/completions`, {
+  const res = await fetch(`${apiUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body,
   })

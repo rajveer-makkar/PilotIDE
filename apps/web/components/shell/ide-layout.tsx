@@ -33,10 +33,19 @@ import { CodeEditor } from "@/components/editor/code-editor"
 import { GitPanel } from "@/components/git/git-panel"
 import { SearchPanel } from "@/components/search/search-panel"
 import { TerminalPanel } from "@/components/terminal/terminal-panel"
+import { ProblemsPanel } from "@/components/problems/problems-panel"
+import { OutputPanel } from "@/components/output/output-panel"
 import { ChatPanel } from "@/components/ai/chat-panel"
 import { SettingsPanel } from "@/components/settings/settings-panel"
+import { CommandPalette } from "@/components/command/command-palette"
+import { useCommandStore, type Command } from "@/stores/command.store"
+import { useEditorSettings } from "@/stores/editor-settings.store"
 
-const activityItems: { tab: ActivityTab; icon: typeof FilesIcon; label: string }[] = [
+const activityItems: {
+  tab: ActivityTab
+  icon: typeof FilesIcon
+  label: string
+}[] = [
   { tab: "explorer", icon: FilesIcon, label: "Explorer" },
   { tab: "search", icon: SearchIcon, label: "Search" },
   { tab: "git", icon: GitBranchIcon, label: "Source Control" },
@@ -51,7 +60,13 @@ const sidebarTitle: Record<ActivityTab, string> = {
   chat: "AI Chat",
 }
 
-function ActivityBar({ activeTab, onTabChange }: { activeTab: ActivityTab; onTabChange: (t: ActivityTab) => void }) {
+function ActivityBar({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: ActivityTab
+  onTabChange: (t: ActivityTab) => void
+}) {
   return (
     <TooltipProvider>
       <nav className="flex w-[48px] shrink-0 flex-col items-center gap-1 border-r bg-muted py-2">
@@ -67,7 +82,7 @@ function ActivityBar({ activeTab, onTabChange }: { activeTab: ActivityTab; onTab
                   data-active={isActive}
                   className={cn(
                     "text-muted-foreground hover:text-foreground",
-                    isActive && "bg-accent text-accent-foreground",
+                    isActive && "bg-accent text-accent-foreground"
                   )}
                   onClick={() => onTabChange(item.tab)}
                 >
@@ -141,13 +156,18 @@ function StatusBar() {
   const workspaceRoot = useLayoutStore((s) => s.workspaceRoot)
   useEffect(() => {
     if (!workspaceRoot) return
-    fetch("/api/git/status").then(r => r.json()).then(d => setBranch(d.branch ?? "")).catch(() => {})
+    fetch("/api/git/status")
+      .then((r) => r.json())
+      .then((d) => setBranch(d.branch ?? ""))
+      .catch(() => {})
   }, [workspaceRoot])
   return (
     <footer className="flex h-[22px] shrink-0 items-center border-t bg-muted px-3 text-[11px] text-muted-foreground">
-      {branch && <span className="flex items-center gap-1">
-        <GitBranchIcon className="size-3" /> {branch}
-      </span>}
+      {branch && (
+        <span className="flex items-center gap-1">
+          <GitBranchIcon className="size-3" /> {branch}
+        </span>
+      )}
       <span className="ml-auto">Ln 1, Col 1</span>
       <span className="ml-4">TypeScript</span>
       <span className="ml-4">UTF-8</span>
@@ -159,20 +179,26 @@ function StatusBar() {
 function SidebarPanel({ activeTab }: { activeTab: ActivityTab }) {
   const workspaceRoot = useLayoutStore((s) => s.workspaceRoot)
   const workspaceName = useLayoutStore((s) => s.workspaceName)
+  const dirHandle = useLayoutStore((s) => s.dirHandle)
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-[35px] items-center gap-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <div className="flex h-[35px] items-center gap-2 px-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
         {sidebarTitle[activeTab]}
         {workspaceName && activeTab === "explorer" && (
-          <span className="truncate text-[11px] font-normal normal-case opacity-60">{workspaceName}</span>
+          <span className="truncate text-[11px] font-normal normal-case opacity-60">
+            {workspaceName}
+          </span>
         )}
       </div>
       <Separator />
       <div className="flex flex-1 flex-col overflow-auto">
-        {activeTab === "explorer" && (
-          workspaceRoot ? <FileTree rootPath={workspaceRoot} /> : <ProjectSelector />
-        )}
+        {activeTab === "explorer" &&
+          (workspaceRoot || dirHandle ? (
+            <FileTree rootPath={workspaceRoot ?? ""} />
+          ) : (
+            <ProjectSelector />
+          ))}
         {activeTab === "search" && <SearchPanel />}
         {activeTab === "git" && (workspaceRoot ? <GitPanel /> : null)}
         {activeTab === "settings" && <SettingsPanel />}
@@ -182,103 +208,234 @@ function SidebarPanel({ activeTab }: { activeTab: ActivityTab }) {
 }
 
 export function IDELayout() {
-  const { activeTab, sidebarOpen, bottomOpen, bottomTab, chatOpen, setActiveTab, toggleSidebar, toggleBottom } =
-    useLayoutStore()
+  const {
+    activeTab,
+    sidebarOpen,
+    bottomOpen,
+    bottomTab,
+    chatOpen,
+    workspaceRoot,
+    setActiveTab,
+    toggleSidebar,
+    toggleBottom,
+  } = useLayoutStore()
+  const register = useCommandStore((s) => s.register)
+  const setBottomTab = useLayoutStore((s) => s.setBottomTab)
+  const toggleChat = useLayoutStore((s) => s.toggleChat)
+  const toggleCmd = useCommandStore((s) => s.toggle)
+
+  useEffect(() => {
+    const cmds: Command[] = [
+      {
+        id: "toggle.sidebar",
+        label: "Toggle Sidebar",
+        keybinding: "Ctrl+B",
+        handler: toggleSidebar,
+      },
+      {
+        id: "toggle.bottom",
+        label: "Toggle Bottom Panel",
+        keybinding: "Ctrl+J",
+        handler: toggleBottom,
+      },
+      { id: "toggle.chat", label: "Toggle AI Chat", handler: toggleChat },
+      {
+        id: "show.terminal",
+        label: "Show Terminal",
+        handler: () => {
+          toggleBottom()
+          setBottomTab("terminal")
+        },
+      },
+      {
+        id: "show.problems",
+        label: "Show Problems",
+        handler: () => {
+          toggleBottom()
+          setBottomTab("problems")
+        },
+      },
+      {
+        id: "show.output",
+        label: "Show Output",
+        handler: () => {
+          toggleBottom()
+          setBottomTab("output")
+        },
+      },
+      {
+        id: "show.explorer",
+        label: "Show Explorer",
+        handler: () => setActiveTab("explorer"),
+      },
+      {
+        id: "show.search",
+        label: "Show Search",
+        handler: () => setActiveTab("search"),
+      },
+      {
+        id: "show.git",
+        label: "Show Source Control",
+        handler: () => setActiveTab("git"),
+      },
+      {
+        id: "show.settings",
+        label: "Show Settings",
+        handler: () => setActiveTab("settings"),
+      },
+      {
+        id: "toggle.minimap",
+        label: "Toggle Minimap",
+        handler: () =>
+          useEditorSettings
+            .getState()
+            .setMinimap(!useEditorSettings.getState().minimap),
+      },
+    ]
+    cmds.forEach((c) => register(c))
+  }, [
+    toggleSidebar,
+    toggleBottom,
+    toggleChat,
+    setBottomTab,
+    setActiveTab,
+    register,
+  ])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "p") {
+        e.preventDefault()
+        toggleCmd()
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [toggleCmd])
 
   return (
-    <div className="flex h-dvh flex-col bg-background text-foreground">
-      <div className="flex flex-1 overflow-hidden">
-        <ActivityBar activeTab={activeTab} onTabChange={setActiveTab} />
+    <>
+      <CommandPalette />
+      <div className="flex h-dvh flex-col bg-background text-foreground">
+        <div className="flex flex-1 overflow-hidden">
+          <ActivityBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <ResizablePanelGroup orientation="horizontal" className="flex-1">
-          {sidebarOpen && (
-            <>
-              <ResizablePanel defaultSize={18} minSize={10}>
-                <SidebarPanel activeTab={activeTab} />
-              </ResizablePanel>
-              <ResizableHandle />
-            </>
-          )}
+          <ResizablePanelGroup orientation="horizontal" className="flex-1">
+            {sidebarOpen && (
+              <>
+                <ResizablePanel defaultSize={300} minSize={10}>
+                  <SidebarPanel activeTab={activeTab} />
+                </ResizablePanel>
+                <ResizableHandle />
+              </>
+            )}
 
-          <ResizablePanel minSize={30}>
-            <ResizablePanelGroup orientation="vertical">
-              <ResizablePanel defaultSize={75} minSize={20}>
-                <div className="flex h-full flex-col">
-                  <div className="flex shrink-0 items-center border-b bg-muted/30">
-                    <Button variant="ghost" size="icon-xs" className="ml-1 shrink-0 text-muted-foreground" onClick={toggleSidebar}>
-                      <PanelLeftIcon className="size-4" />
-                      <span className="sr-only">Toggle Sidebar</span>
-                    </Button>
-                    <EditorTabs />
-                  </div>
-                  <CodeEditor />
-                </div>
-              </ResizablePanel>
-
-              {bottomOpen && (
-                <>
-                  <ResizableHandle />
-                  <ResizablePanel defaultSize={25} minSize={10}>
-                    <div className="flex h-full flex-col">
-                      <div className="flex h-[35px] items-center border-b bg-muted/30 px-2">
-                        <div className="flex items-center gap-1 text-xs">
-                          <button
-                            className={cn(
-                              "rounded px-2 py-1",
-                              bottomTab === "terminal" && "bg-background"
-                            )}
-                            onClick={() => useLayoutStore.getState().setBottomTab("terminal")}
-                          >
-                            TERMINAL
-                          </button>
-                          <button
-                            className={cn(
-                              "rounded px-2 py-1",
-                              bottomTab === "problems" && "bg-background"
-                            )}
-                            onClick={() => useLayoutStore.getState().setBottomTab("problems")}
-                          >
-                            PROBLEMS
-                          </button>
-                        </div>
-                        <Button variant="ghost" size="icon-xs" className="ml-auto text-muted-foreground" onClick={toggleBottom}>
-                          <PanelRightIcon className="size-4 rotate-90" />
-                          <span className="sr-only">Toggle Panel</span>
-                        </Button>
-                      </div>
-                      <div className="flex flex-1 flex-col">
-                        {bottomTab === "terminal" && <TerminalPanel />}
-                        {bottomTab === "problems" && (
-                          <div className="flex flex-1 items-center justify-center">
-                            <p className="text-xs text-muted-foreground">No problems detected</p>
-                          </div>
-                        )}
-                      </div>
+            <ResizablePanel minSize={30}>
+              <ResizablePanelGroup orientation="vertical">
+                <ResizablePanel defaultSize={75} minSize={20}>
+                  <div className="flex h-full flex-col">
+                    <div className="flex shrink-0 items-center border-b bg-muted/30">
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="ml-1 shrink-0 text-muted-foreground"
+                        onClick={toggleSidebar}
+                      >
+                        <PanelLeftIcon className="size-4" />
+                        <span className="sr-only">Toggle Sidebar</span>
+                      </Button>
+                      <EditorTabs />
                     </div>
-                  </ResizablePanel>
-                </>
-              )}
-            </ResizablePanelGroup>
-          </ResizablePanel>
-
-          {chatOpen && (
-            <>
-              <ResizableHandle />
-              <ResizablePanel defaultSize={22} minSize={12}>
-                <div className="flex h-full flex-col">
-                  <div className="flex h-[35px] items-center gap-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    AI Chat
+                    <CodeEditor workspaceRoot={workspaceRoot} />
                   </div>
-                  <Separator />
-                  <ChatPanel />
-                </div>
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
-      </div>
+                </ResizablePanel>
 
-      <StatusBar />
-    </div>
+                {bottomOpen && (
+                  <>
+                    <ResizableHandle />
+                    <ResizablePanel defaultSize={25} minSize={10}>
+                      <div className="flex h-full flex-col">
+                        <div className="flex h-[35px] items-center border-b bg-muted/30 px-2">
+                          <div className="flex items-center gap-1 text-xs">
+                            <button
+                              className={cn(
+                                "rounded px-2 py-1",
+                                bottomTab === "terminal" && "bg-background"
+                              )}
+                              onClick={() =>
+                                useLayoutStore
+                                  .getState()
+                                  .setBottomTab("terminal")
+                              }
+                            >
+                              TERMINAL
+                            </button>
+                            <button
+                              className={cn(
+                                "rounded px-2 py-1",
+                                bottomTab === "problems" && "bg-background"
+                              )}
+                              onClick={() =>
+                                useLayoutStore
+                                  .getState()
+                                  .setBottomTab("problems")
+                              }
+                            >
+                              PROBLEMS
+                            </button>
+                            <button
+                              className={cn(
+                                "rounded px-2 py-1",
+                                bottomTab === "output" && "bg-background"
+                              )}
+                              onClick={() =>
+                                useLayoutStore.getState().setBottomTab("output")
+                              }
+                            >
+                              OUTPUT
+                            </button>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            className="ml-auto text-muted-foreground"
+                            onClick={toggleBottom}
+                          >
+                            <PanelRightIcon className="size-4 rotate-90" />
+                            <span className="sr-only">Toggle Panel</span>
+                          </Button>
+                        </div>
+                        <div className="flex flex-1 flex-col">
+                          {bottomTab === "terminal" && <TerminalPanel />}
+                          {bottomTab === "problems" && <ProblemsPanel />}
+                          {bottomTab === "output" && <OutputPanel />}
+                        </div>
+                      </div>
+                    </ResizablePanel>
+                  </>
+                )}
+              </ResizablePanelGroup>
+            </ResizablePanel>
+
+            {chatOpen && (
+              <>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={400} minSize={12}>
+                  <div className="flex h-full flex-col">
+                    <div className="flex h-[35px] items-center gap-2 px-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      AI Chat
+                    </div>
+                    <Separator />
+                    <ChatPanel />
+                  </div>
+                </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
+        </div>
+
+        <StatusBar />
+      </div>
+    </>
   )
 }

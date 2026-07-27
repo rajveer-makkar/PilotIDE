@@ -5,6 +5,7 @@ import { Button } from "@workspace/ui/components/button"
 import { PlusIcon, XIcon } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { TerminalInstance } from "./terminal-instance"
+import { useTerminalSettings } from "@/stores/terminal-settings.store"
 
 interface Tab {
   id: string
@@ -17,6 +18,7 @@ export function TerminalPanel() {
   const [tabs, setTabs] = useState<Tab[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const shellPath = useTerminalSettings((s) => s.shellPath)
 
   const closeTab = useCallback(async (id: string) => {
     setTabs((prev) => prev.filter((t) => t.id !== id))
@@ -27,7 +29,11 @@ export function TerminalPanel() {
   const create = useCallback(async () => {
     setCreating(true)
     try {
-      const res = await fetch("/api/terminal/create", { method: "POST" })
+      const res = await fetch("/api/terminal/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shell: shellPath || undefined }),
+      })
       const { id } = await res.json()
       tabCounter++
       const name = `Terminal ${tabCounter}`

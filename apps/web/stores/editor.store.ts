@@ -16,6 +16,9 @@ interface EditorStore {
   activePath: string | null
   openFile: (path: string, name: string, content: string) => void
   closeFile: (path: string) => void
+  closeAll: () => void
+  closeOthers: (path: string) => void
+  closeToRight: (path: string) => void
   setActive: (path: string) => void
   updateContent: (path: string, content: string) => void
   markClean: (path: string) => void
@@ -47,6 +50,26 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const idx = order.indexOf(path)
     const nextActive = idx > 0 ? order[idx - 1] : order[1] || null
     set({ files: rest, activePath: get().activePath === path ? nextActive : get().activePath })
+  },
+
+  closeAll: () => set({ files: {}, activePath: null }),
+
+  closeOthers: (path) => {
+    const f = get().files[path]
+    if (!f) return
+    set({ files: { [path]: f }, activePath: path })
+  },
+
+  closeToRight: (path) => {
+    const order = Object.keys(get().files)
+    const idx = order.indexOf(path)
+    const keep = order.slice(0, idx + 1)
+    const rest: Record<string, EditorFile> = {}
+    for (const k of keep) {
+      const f = get().files[k]
+      if (f) rest[k] = f
+    }
+    set({ files: rest, activePath: get().activePath && rest[get().activePath!] ? get().activePath : path })
   },
 
   setActive: (path) => set({ activePath: path }),

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { useChatStore, type ChatMessage } from "@/stores/chat.store"
+import { useAISettings } from "@/stores/ai-settings.store"
 import { SendIcon, Trash2Icon, BotIcon, UserIcon } from "lucide-react"
 
 function ChatBubble({ msg }: { msg: ChatMessage }) {
@@ -56,10 +57,18 @@ export function ChatPanel() {
 
     try {
       const apiMessages = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }))
+      const aiConfig = useAISettings.getState()
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({
+          messages: apiMessages,
+          aiConfig: {
+            apiUrl: aiConfig.apiUrl || undefined,
+            apiKey: aiConfig.apiKey || undefined,
+            model: aiConfig.model || undefined,
+          },
+        }),
         signal: abortRef.current.signal,
       })
 

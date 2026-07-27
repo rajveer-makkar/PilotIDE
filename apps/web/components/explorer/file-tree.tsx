@@ -77,13 +77,13 @@ function CreateInput({
         } else {
           await dirHandle.getFileHandle(name, { create: true })
         }
-      } catch { /* ignore */ }
+      } catch (e) { console.error("create error", e) }
     } else {
       await fetch("/api/files/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path: childPath, type }),
-      }).catch(() => {})
+      }).catch((e) => console.error("create fetch error", e))
     }
     onDone()
   }
@@ -142,7 +142,7 @@ function TreeNode({
         const data = await res.json()
         setChildren(data.files ?? [])
       }
-    } catch { setChildren([]) } finally { setLoading(false) }
+      } catch (e) { console.error("list error", e); setChildren([]) } finally { setLoading(false) }
   }, [path, children, creating, dirHandle])
 
   async function readFile(filePath: string) {
@@ -164,7 +164,7 @@ function TreeNode({
     try {
       const content = await readFile(path)
       if (content !== undefined) openFile(path, name, content)
-    } catch { /* read error */ }
+    } catch (e) { console.error("read error", e) }
   }
 
   async function doRename() {
@@ -189,13 +189,13 @@ function TreeNode({
           await w.close()
           await parentHandle.removeEntry(name)
         }
-      } catch { /* rename error */ }
+        } catch (e) { console.error("rename error", e) }
     } else {
       await fetch("/api/files/rename", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path, newName }),
-      }).catch(() => {})
+      }).catch((e) => console.error("rename fetch error", e))
     }
     setRenaming(false)
     onRefresh()
@@ -208,13 +208,13 @@ function TreeNode({
         const parent = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : ""
         const parentHandle = parent ? await resolveHandleDir(dirHandle, parent) : dirHandle
         await parentHandle.removeEntry(name, { recursive: true })
-      } catch { /* delete error */ }
+      } catch (e) { console.error("delete error", e) }
     } else {
       await fetch("/api/files/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path }),
-      }).catch(() => {})
+      }).catch((e) => console.error("delete fetch error", e))
     }
     onRefresh()
   }
@@ -329,7 +329,7 @@ export function FileTree({ rootPath }: { rootPath: string }) {
       })
       setRoot(entries)
     } else {
-      const res = await fetch(`/api/files/list?path=${encodeURIComponent("")}`)
+      const res = await fetch(`/api/files/list?path=${encodeURIComponent(rootPath)}`)
       const data = await res.json()
       setRoot(data.files ?? [])
     }

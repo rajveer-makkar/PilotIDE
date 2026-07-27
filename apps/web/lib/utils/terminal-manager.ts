@@ -30,10 +30,10 @@ interface Session {
 const sessions = new Map<string, Session>()
 const ptySpawn = loadPty()
 
-export function createSession(): string {
+export function createSession(shell?: string): string {
   const root = getWorkspaceRoot()
   const id = randomUUID()
-  const term = ptySpawn(process.env.SHELL || "/bin/bash", [], {
+  const term = ptySpawn(shell || process.env.SHELL || "/bin/bash", [], {
     name: "xterm-256color",
     cwd: root || undefined,
     env: { ...process.env, TERM: "xterm-256color" },

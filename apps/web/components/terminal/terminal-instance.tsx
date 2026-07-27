@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import "xterm/css/xterm.css"
+import { useTerminalSettings } from "@/stores/terminal-settings.store"
 
 interface Props {
   sessionId: string
@@ -13,6 +14,8 @@ export function TerminalInstance({ sessionId, onExit }: Props) {
   const killTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const onExitRef = useRef(onExit)
   onExitRef.current = onExit
+
+  const { fontSize, fontFamily } = useTerminalSettings()
 
   useEffect(() => {
     clearTimeout(killTimerRef.current)
@@ -32,8 +35,8 @@ export function TerminalInstance({ sessionId, onExit }: Props) {
         const isDark = document.documentElement.classList.contains("dark")
         term = new Terminal({
           cursorBlink: true,
-          fontSize: 13,
-          fontFamily: "Menlo, monospace",
+          fontSize,
+          fontFamily,
           theme: isDark
             ? { background: "#1e1e1e", foreground: "#d4d4d4", cursor: "#d4d4d4" }
             : { background: "#f3f3f3", foreground: "#333", cursor: "#333" },
