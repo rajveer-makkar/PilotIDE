@@ -1,12 +1,13 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { TerminalIcon, FolderOpenIcon, Trash2Icon } from "lucide-react"
 import { useLayoutStore } from "@/stores/layout.store"
 import { useWelcomeStore } from "@/stores/welcome.store"
 
 export function WelcomePanel() {
+  const [error, setError] = useState("")
   const workspaceRoot = useLayoutStore((s) => s.workspaceRoot)
   const workspaceName = useLayoutStore((s) => s.workspaceName)
   const openWorkspace = useLayoutStore((s) => s.openWorkspace)
@@ -17,12 +18,14 @@ export function WelcomePanel() {
 
   const pickFolder = useCallback(async () => {
     try {
+      setError("")
       const handle = await (window as any).showDirectoryPicker()
       openFolder(handle)
     } catch { /* cancelled */ }
   }, [openFolder])
 
   const openRecent = useCallback(async (path: string) => {
+    setError("")
     try {
       const res = await fetch("/api/workspace/open", {
         method: "POST",
@@ -30,9 +33,15 @@ export function WelcomePanel() {
         body: JSON.stringify({ path }),
       })
       const data = await res.json()
-      if (res.ok) openWorkspace(data.root, data.name)
-    } catch { /* network error */ }
-    addRecent(path)
+      if (res.ok) {
+        openWorkspace(data.root, data.name)
+        addRecent(data.root)
+      } else {
+        setError(data.error || "Failed to open")
+      }
+    } catch {
+      setError("Network error — is the server running?")
+    }
   }, [openWorkspace, addRecent])
 
   return (
@@ -42,6 +51,10 @@ export function WelcomePanel() {
         <h1 className="text-xl font-semibold">Pilot IDE</h1>
         <p className="text-sm text-muted-foreground">Start coding — open a folder or create a new file</p>
       </div>
+
+      {error && (
+        <p className="max-w-sm rounded-md bg-destructive/10 px-3 py-2 text-center text-xs text-destructive">{error}</p>
+      )}
 
       <div className="flex gap-3">
         <Button onClick={pickFolder}>

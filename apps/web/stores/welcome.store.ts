@@ -19,6 +19,15 @@ export const useWelcomeStore = create<WelcomeStore>()(
         })),
       clearRecents: () => set({ recentProjects: [] }),
     }),
-    { name: "pilot-welcome" }
+    {
+      name: "pilot-welcome",
+      merge: (persisted, current) => ({
+        ...current,
+        ...(persisted as WelcomeStore),
+        recentProjects: ((persisted as WelcomeStore)?.recentProjects ?? []).filter(
+          (p: string) => p.startsWith("/")
+        ),
+      }),
+    }
   )
 )

@@ -5,6 +5,7 @@ import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { FolderOpenIcon, FolderUpIcon } from "lucide-react"
 import { useLayoutStore } from "@/stores/layout.store"
+import { useWelcomeStore } from "@/stores/welcome.store"
 
 export function ProjectSelector() {
   const [path, setPath] = useState("")
@@ -12,6 +13,7 @@ export function ProjectSelector() {
   const [loading, setLoading] = useState(false)
   const openWorkspace = useLayoutStore((s) => s.openWorkspace)
   const openFolder = useLayoutStore((s) => s.openFolder)
+  const addRecent = useWelcomeStore((s) => s.addRecent)
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -29,6 +31,7 @@ export function ProjectSelector() {
         return
       }
       openWorkspace(data.root, data.name)
+      addRecent(data.root)
     } catch {
       setError("Failed to open workspace")
     } finally {
