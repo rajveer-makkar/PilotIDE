@@ -18,6 +18,7 @@ export function TerminalPanel() {
   const [tabs, setTabs] = useState<Tab[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [error, setError] = useState("")
   const shellPath = useTerminalSettings((s) => s.shellPath)
 
   const closeTab = useCallback(async (id: string) => {
@@ -27,6 +28,7 @@ export function TerminalPanel() {
   }, [])
 
   const create = useCallback(async () => {
+    setError("")
     setCreating(true)
     try {
       const res = await fetch("/api/terminal/create", {
@@ -34,17 +36,23 @@ export function TerminalPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shell: shellPath || undefined }),
       })
+      if (!res.ok) {
+        const txt = await res.text().catch(() => res.statusText)
+        setError(`Failed: ${res.status} ${txt}`)
+        return
+      }
       const { id } = await res.json()
+      if (!id) { setError("No session ID returned"); return }
       tabCounter++
       const name = `Terminal ${tabCounter}`
       setTabs((prev) => [...prev, { id, name }])
       setActiveId(id)
-    } catch {
-      /* retry */
+    } catch (e) {
+      setError(`Error: ${(e as Error).message}`)
     } finally {
       setCreating(false)
     }
-  }, [])
+  }, [shellPath])
 
   if (tabs.length === 0) {
     return (
@@ -54,6 +62,7 @@ export function TerminalPanel() {
           <PlusIcon className="mr-1 size-3" />
           {creating ? "Starting..." : "New Terminal"}
         </Button>
+        {error && <p className="max-w-xs text-center text-xs text-destructive">{error}</p>}
       </div>
     )
   }
