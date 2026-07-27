@@ -22,8 +22,16 @@ export function WelcomePanel() {
     } catch { /* cancelled */ }
   }, [openFolder])
 
-  const openRecent = useCallback((path: string) => {
-    openWorkspace(path, path.split("/").pop() ?? path)
+  const openRecent = useCallback(async (path: string) => {
+    try {
+      const res = await fetch("/api/workspace/open", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path }),
+      })
+      const data = await res.json()
+      if (res.ok) openWorkspace(data.root, data.name)
+    } catch { /* network error */ }
     addRecent(path)
   }, [openWorkspace, addRecent])
 
