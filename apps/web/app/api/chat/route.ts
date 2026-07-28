@@ -5,9 +5,31 @@ interface Message {
   content: string
 }
 
-const ENV_API_URL = process.env.AI_API_URL ?? "https://api.openai.com/v1"
+const DEFAULT_API_URL = "https://api.openai.com/v1"
+const ENV_API_URL = process.env.AI_API_URL ?? DEFAULT_API_URL
 const ENV_API_KEY = process.env.AI_API_KEY ?? ""
 const ENV_MODEL = process.env.AI_MODEL ?? "gpt-4o-mini"
+
+function normalizeBaseUrl(url: string): string {
+  return url.trim().replace(/\/+$/, "")
+}
+
+const ALLOWED_API_URLS = new Set(
+  [
+    DEFAULT_API_URL,
+    ENV_API_URL,
+    ...(process.env.AI_API_URL_ALLOWLIST ?? "")
+      .split(",")
+      .map((u) => u.trim())
+      .filter(Boolean),
+  ].map(normalizeBaseUrl),
+)
+
+function resolveApiUrl(candidate?: string): string {
+  if (!candidate) return normalizeBaseUrl(ENV_API_URL)
+  const normalized = normalizeBaseUrl(candidate)
+  return ALLOWED_API_URLS.has(normalized) ? normalized : normalizeBaseUrl(ENV_API_URL)
+}
 
 export async function POST(request: Request) {
   const {
@@ -20,7 +42,7 @@ export async function POST(request: Request) {
     aiConfig?: { apiUrl?: string; apiKey?: string; model?: string }
   } = await request.json()
 
-  const apiUrl = aiConfig?.apiUrl || ENV_API_URL
+  const apiUrl = resolveApiUrl(aiConfig?.apiUrl)
   const apiKey = aiConfig?.apiKey || ENV_API_KEY
   const model = bodyModel || aiConfig?.model || ENV_MODEL
 
@@ -40,7 +62,8 @@ export async function POST(request: Request) {
     stream: true,
   })
 
-  const res = await fetch(`${apiUrl}/chat/completions`, {
+  const endpoint = new URL("/chat/completions", `${apiUrl}/`).toString()
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
