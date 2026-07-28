@@ -1,35 +1,13 @@
 import { NextResponse } from "next/server"
+import { resolveAiApiUrl } from "@/lib/utils/api-security"
 
 interface Message {
   role: "user" | "assistant" | "system"
   content: string
 }
 
-const DEFAULT_API_URL = "https://api.openai.com/v1"
-const ENV_API_URL = process.env.AI_API_URL ?? DEFAULT_API_URL
 const ENV_API_KEY = process.env.AI_API_KEY ?? ""
 const ENV_MODEL = process.env.AI_MODEL ?? "gpt-4o-mini"
-
-function normalizeBaseUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "")
-}
-
-const ALLOWED_API_URLS = new Set(
-  [
-    DEFAULT_API_URL,
-    ENV_API_URL,
-    ...(process.env.AI_API_URL_ALLOWLIST ?? "")
-      .split(",")
-      .map((u) => u.trim())
-      .filter(Boolean),
-  ].map(normalizeBaseUrl),
-)
-
-function resolveApiUrl(candidate?: string): string {
-  if (!candidate) return normalizeBaseUrl(ENV_API_URL)
-  const normalized = normalizeBaseUrl(candidate)
-  return ALLOWED_API_URLS.has(normalized) ? normalized : normalizeBaseUrl(ENV_API_URL)
-}
 
 export async function POST(request: Request) {
   const {
@@ -42,12 +20,15 @@ export async function POST(request: Request) {
     aiConfig?: { apiUrl?: string; apiKey?: string; model?: string }
   } = await request.json()
 
-  const apiUrl = resolveApiUrl(aiConfig?.apiUrl)
+  const apiUrl = resolveAiApiUrl(aiConfig?.apiUrl)
   const apiKey = aiConfig?.apiKey || ENV_API_KEY
   const model = bodyModel || aiConfig?.model || ENV_MODEL
 
   if (!apiKey) {
-    return NextResponse.json({ error: "AI_API_KEY not configured" }, { status: 400 })
+    return NextResponse.json(
+      { error: "AI_API_KEY not configured" },
+      { status: 400 }
+    )
   }
 
   const systemMsg: Message = {
@@ -74,7 +55,10 @@ export async function POST(request: Request) {
 
   if (!res.ok) {
     const err = await res.text()
-    return NextResponse.json({ error: `AI API error: ${res.status} ${err}` }, { status: 502 })
+    return NextResponse.json(
+      { error: `AI API error: ${res.status} ${err}` },
+      { status: 502 }
+    )
   }
 
   const encoder = new TextEncoder()
@@ -102,7 +86,11 @@ export async function POST(request: Request) {
               const parsed = JSON.parse(trimmed.slice(6))
               const delta = parsed.choices?.[0]?.delta?.content
               if (delta) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: delta })}\n\n`))
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({ content: delta })}\n\n`
+                  )
+                )
               }
             } catch {
               /* skip malformed chunks */

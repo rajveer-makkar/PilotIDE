@@ -1,20 +1,35 @@
 import { NextResponse } from "next/server"
 import { readFile, writeFile } from "node:fs/promises"
-import path from "node:path"
-import { getWorkspaceRoot } from "@/lib/utils/path-security"
+import {
+  assertWithinWorkspace,
+  getWorkspaceRoot,
+} from "@/lib/utils/path-security"
 
 export async function POST(request: Request) {
   try {
     const root = getWorkspaceRoot()
-    if (!root) return NextResponse.json({ error: "no workspace" }, { status: 400 })
+    if (!root)
+      return NextResponse.json({ error: "no workspace" }, { status: 400 })
     const { q, replacement, files } = await request.json()
-    if (!q || replacement === undefined) return NextResponse.json({ error: "missing q or replacement" }, { status: 400 })
+    if (!q || replacement === undefined) {
+      return NextResponse.json(
+        { error: "missing q or replacement" },
+        { status: 400 }
+      )
+    }
+    if (!Array.isArray(files)) {
+      return NextResponse.json(
+        { error: "files must be an array" },
+        { status: 400 }
+      )
+    }
 
-    const targetFiles: string[] = files ?? []
+    const targetFiles: string[] = files
     const replaced: { file: string; count: number }[] = []
 
     for (const f of targetFiles) {
-      const fullPath = path.join(root, f)
+      if (typeof f !== "string") continue
+      const fullPath = assertWithinWorkspace(f)
       const content = await readFile(fullPath, "utf-8")
       const newContent = content.replaceAll(q, replacement)
       if (newContent !== content) {

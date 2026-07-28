@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server"
-import { git } from "@/lib/utils/git"
+import { assertGitName, git } from "@/lib/utils/git"
 import { getWorkspaceRoot } from "@/lib/utils/path-security"
 
 export async function POST(request: Request) {
   try {
     const root = getWorkspaceRoot()
-    if (!root) return NextResponse.json({ error: "no workspace" }, { status: 400 })
+    if (!root)
+      return NextResponse.json({ error: "no workspace" }, { status: 400 })
     const { remote } = await request.json()
-    const args = ["fetch", remote || "origin"]
+    const args = ["fetch", assertGitName(remote, "origin")]
     await git(args, root)
     return NextResponse.json({ ok: true })
   } catch (e) {

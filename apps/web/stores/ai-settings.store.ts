@@ -3,9 +3,6 @@
 import { create } from "zustand"
 import { persist, type PersistStorage } from "zustand/middleware"
 
-const enc = (s: string) => btoa(s)
-const dec = (s: string) => { try { return atob(s) } catch { return s } }
-
 interface AISettings {
   apiUrl: string
   apiKey: string
@@ -20,18 +17,18 @@ const storage: PersistStorage<AISettings> = {
     const raw = localStorage.getItem(name)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    if (parsed?.state?.apiKey) parsed.state.apiKey = dec(parsed.state.apiKey)
+    if (parsed?.state) parsed.state.apiKey = ""
     return parsed
   },
   setItem(name, value) {
-    const encoded = {
+    const withoutApiKey = {
       ...value,
       state: {
         ...value.state,
-        apiKey: value.state.apiKey ? enc(value.state.apiKey) : value.state.apiKey,
+        apiKey: "",
       },
     }
-    localStorage.setItem(name, JSON.stringify(encoded))
+    localStorage.setItem(name, JSON.stringify(withoutApiKey))
   },
   removeItem(name) {
     localStorage.removeItem(name)

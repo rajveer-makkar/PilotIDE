@@ -47,6 +47,7 @@ npm install
 
 # Set up AI (optional — without these, the chat panel shows "Not configured")
 export AI_API_URL=https://api.openai.com/v1
+export AI_ALLOWED_API_ORIGINS=https://api.openai.com
 export AI_API_KEY=sk-...
 export AI_MODEL=gpt-4o-mini
 
@@ -82,12 +83,14 @@ AI settings can be configured in two ways:
 
 1. **Environment variables** (server-side, set before starting):
    - `AI_API_URL` — API base URL (default: `https://api.openai.com/v1`)
+   - `AI_ALLOWED_API_ORIGINS` — Comma-separated allowed AI API origins for custom endpoints (default: `https://api.openai.com`)
    - `AI_API_KEY` — API key (required for chat)
    - `AI_MODEL` — Model name (default: `gpt-4o-mini`)
 
-2. **Settings panel** (client-side, persisted to localStorage):
+2. **Settings panel** (client-side):
    - Open Settings (gear icon) → AI section
-   - Overrides environment variables when set
+   - API URL and model persist to localStorage; API keys are kept in memory only
+   - Custom API URL origins must be listed in `AI_ALLOWED_API_ORIGINS`
 
 ## Project Structure
 

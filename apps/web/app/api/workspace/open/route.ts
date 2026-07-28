@@ -1,19 +1,24 @@
 import { stat } from "node:fs/promises"
 import { NextResponse } from "next/server"
-import { setWorkspaceRoot, getWorkspaceRoot } from "@/lib/utils/path-security"
+import {
+  assertWorkspaceDirectory,
+  getWorkspaceRoot,
+  setWorkspaceRoot,
+} from "@/lib/utils/path-security"
 
 export async function POST(request: Request) {
   try {
-    const { path } = await request.json()
-    if (!path || typeof path !== "string") {
-      return NextResponse.json({ error: "path required" }, { status: 400 })
-    }
-    const stats = await stat(path)
+    const { path } = (await request.json()) as { path?: unknown }
+    const safePath = await assertWorkspaceDirectory(path as string)
+    const stats = await stat(safePath)
     if (!stats.isDirectory()) {
       return NextResponse.json({ error: "not a directory" }, { status: 400 })
     }
-    setWorkspaceRoot(path)
-    return NextResponse.json({ root: path, name: path.split("/").pop() || path })
+    await setWorkspaceRoot(safePath)
+    return NextResponse.json({
+      root: safePath,
+      name: safePath.split("/").pop() || safePath,
+    })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }

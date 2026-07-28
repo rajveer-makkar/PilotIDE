@@ -1,6 +1,12 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "AI_ALLOWED_API_ORIGINS",
+    "AI_API_KEY",
+    "AI_API_URL",
+    "AI_MODEL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -19,7 +25,7 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "env": ["SHELL", "AI_API_URL", "AI_API_KEY", "AI_MODEL"]
+      "env": ["SHELL"]
     }
   }
 }
