@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const entries = await readdir(absPath, { withFileTypes: true })
     const files = await Promise.all(
       entries
-        .filter((e) => !IGNORED.has(e.name) && !e.name.startsWith("."))
+        .filter((e) => !IGNORED.has(e.name))
         .map(async (e) => {
           const fullPath = `${absPath}/${e.name}`
           let size = 0

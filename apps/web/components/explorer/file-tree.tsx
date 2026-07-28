@@ -12,6 +12,7 @@ import {
   PlusIcon,
   FilePenLineIcon,
   Trash2Icon,
+  RotateCcwIcon,
 } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
 import {
@@ -351,6 +352,11 @@ export function FileTree({ rootPath }: { rootPath: string }) {
 
   return (
     <div className="py-1">
+      <div className="flex items-center justify-end px-3 py-1">
+        <button className="rounded p-0.5 text-muted-foreground hover:bg-accent" onClick={refresh}>
+          <RotateCcwIcon className="size-3" />
+        </button>
+      </div>
       {root?.map((entry) => (
         <TreeNode key={entry.path} {...entry} depth={0} onRefresh={refresh} />
       ))}

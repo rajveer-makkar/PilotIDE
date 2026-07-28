@@ -41,6 +41,7 @@ import { CommandPalette } from "@/components/command/command-palette"
 import { TabBar, type Tab } from "@/components/ui/tab-bar"
 import { useCommandStore, type Command } from "@/stores/command.store"
 import { useEditorSettings } from "@/stores/editor-settings.store"
+import { useEditorStore } from "@/stores/editor.store"
 
 const activityItems: {
   tab: ActivityTab
@@ -326,6 +327,12 @@ export function IDELayout() {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "p") {
         e.preventDefault()
         toggleCmd()
+        return
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "w") {
+        e.preventDefault()
+        const { activePath, closeFile } = useEditorStore.getState()
+        if (activePath) closeFile(activePath)
       }
     }
     window.addEventListener("keydown", handler)

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto"
+import { homedir } from "node:os"
 import { getWorkspaceRoot } from "./path-security"
 
 // ponytail: minimal node-pty interface, full types when needed
@@ -35,7 +36,7 @@ export function createSession(shell?: string): string {
   const id = randomUUID()
   const term = ptySpawn(shell || process.env.SHELL || "/bin/bash", [], {
     name: "xterm-256color",
-    cwd: root || undefined,
+    cwd: root || homedir(),
     env: { ...process.env, TERM: "xterm-256color" },
     cols: 80,
     rows: 24,

@@ -1,6 +1,6 @@
-# Pilot IDE
+# Pilot IDE v1.0
 
-A browser-based IDE built with Next.js 16, React 19, and TypeScript. Features a Monaco editor, xterm.js terminal, git integration, AI chat, and more — all running on localhost.
+A browser-based IDE built with Next.js 16, React 19, and TypeScript. Features a Monaco editor, xterm.js terminal, git integration, AI chat with full project context, and more — all running on localhost.
 
 ## Tech Stack
 
@@ -30,7 +30,7 @@ packages/
 - **Monaco Editor** — syntax highlighting, minimap, bracket pair colorization, diff editor, breadcrumbs, format on save, auto-save on blur
 - **Multi-terminal** — multiple xterm.js tabs with PTY sessions, configurable font/shell, copy/paste
 - **Git Integration** — status, stage/unstage, commit, diff, push/pull/fetch
-- **AI Chat** — streaming chat with configurable OpenAI-compatible API (URL, key, model)
+- **AI Chat** — streaming chat with configurable OpenAI-compatible API (URL, key, model), full project context (file tree + open files), token usage counter
 - **Search & Replace** — workspace-wide grep with replace-all
 - **Command Palette** — Ctrl+Shift+P overlay with fuzzy search
 - **Problems Panel** — Monaco diagnostics (errors/warnings)
@@ -71,6 +71,7 @@ Open [http://localhost:3000](http://localhost:3000). Open a folder via the file 
 | Shortcut | Action |
 |---|---|
 | `Ctrl/Cmd + S` | Save + format (if enabled) |
+| `Ctrl/Cmd + W` | Close active editor tab |
 | `Ctrl/Cmd + Shift + P` | Command Palette |
 | `Ctrl/Cmd + B` | Toggle Sidebar |
 | `Ctrl/Cmd + J` | Toggle Bottom Panel |

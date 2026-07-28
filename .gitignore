@@ -46,3 +46,8 @@ next-env.d.ts
 
 # eod summaries
 EOD.md
+
+# agent config (internal tooling, not for public)
+AGENTS.md
+.opencode/
+opencode.json
